@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #1a1a2e; color: #e0e0e0; margin: 0; }
+        .container { max-width: 1400px; margin: auto; padding: 20px; }
+        h1 { color: #ffffff; padding-bottom: 10px; }
+        h2 { color: #ffffff; border-bottom: 1px solid #3a3a5e; padding-bottom: 10px; margin-top: 0; }
+        
+        /* Tab Navigation */
+        .tab-nav { border-bottom: 1px solid #3a3a5e; margin-bottom: 20px; }
+        .tab-nav button { background: none; border: none; color: #a0a0a0; padding: 15px 25px; font-size: 16px; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.2s ease; }
+        .tab-nav button.active { color: #ffffff; border-bottom-color: #0d6efd; }
+        
+        /* Tab Content Panes */
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        .admin-layout { display: flex; flex-wrap: wrap; gap: 30px; align-items: flex-start; }
+        .left-column, .user-form-column { flex: 1; min-width: 400px; display: flex; flex-direction: column; gap: 30px; }
+        .right-column, .user-table-column { flex: 2; min-width: 600px; }
+        .form-section { background-color: #242444; padding: 20px; border-radius: 8px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 500; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; background-color: #2c2c4c; border: 1px solid #4a4a6e; border-radius: 5px; color: #e0e0e0; box-sizing: border-box; }
+        .form-group textarea { resize: vertical; min-height: 80px; }
+        .form-group .checkbox-label { display: flex; align-items: center; }
+        .form-group input[type="checkbox"] { width: auto; margin-right: 10px; }
+        .btn { padding: 12px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 16px; }
+        .btn-primary { background-color: #0d6efd; color: white; }
+        .btn-primary:disabled { background-color: #0b5ed7; cursor: not-allowed; }
+        .btn-secondary { background-color: #6c757d; color: white; }
+        .btn-container { display: flex; gap: 10px; margin-top: 20px; }
+        .manage-table { width: 100%; border-collapse: collapse; }
+        .manage-table th, .manage-table td { padding: 12px; text-align: left; border-bottom: 1px solid #3a3a5e; }
+        .manage-table th { background-color: #2c2c4c; }
+        .manage-table img { width: 80px; height: 50px; object-fit: cover; border-radius: 4px; }
+        .btn-sm { padding: 5px 10px; font-size: 12px; margin-right: 5px; }
+        .btn-edit { background-color: #ffc107; color: black; }
+        .btn-delete { background-color: #dc3545; color: white; }
+        .loader, #statusMessage { text-align: center; padding: 40px; font-size: 18px; }
+        #statusMessage { display: none; margin-top: 15px; padding: 10px; border-radius: 5px; }
+        .status-success { background-color: #198754; color: white; }
+        .status-error { background-color: #dc3545; color: white; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Admin Dashboard</h1>
+
+    <nav class="tab-nav">
+        <button class="active" onclick="openTab(event, 'Prompts')">Prompts Management</button>
+        <button onclick="openTab(event, 'Users')">User Management</button>
+    </nav>
+
+    <div id="Prompts" class="tab-content active">
+        <div class="admin-layout">
+            <div class="left-column">
+                <div class="form-section">
+                    <h2 id="form-title">Add New Prompt</h2>
+                    <form id="promptForm">
+                        <input type="hidden" id="promptId" name="ID">
+                        <div class="form-group"><label for="title">Title *</label><input type="text" id="title" name="Title" required></div>
+                        <div class="form-group"><label for="category">Category *</label><select id="category" name="Category" required><option value="" disabled selected>Select category</option></select></div>
+                        <div class="form-group"><label for="difficulty">Difficulty *</label><select id="difficulty" name="Difficulty" required><option value="" disabled selected>Select difficulty</option><option value="Beginner">Beginner</option><option value="Intermediate">Intermediate</option><option value="Advanced">Advanced</option></select></div>
+                        <div class="form-group"><label for="imageUrl">Image URL *</label><input type="url" id="imageUrl" name="ImageURL" required></div>
+                        <div class="form-group"><label for="description">Description *</label><textarea id="description" name="Description" required></textarea></div>
+                        <div class="form-group"><label for="promptText">Prompt Text *</label><textarea id="promptText" name="PromptText" required></textarea></div>
+                        <div class="form-group"><label for="tags">Tags</label><input type="text" id="tags" name="Tags" placeholder="e.g. seo,blogging,copywriting"></div>
+                        <div class="form-group"><label class="checkbox-label"><input type="checkbox" id="featured" name="Featured"> Featured Prompt</label></div>
+                        <div class="btn-container"><button type="submit" class="btn btn-primary" id="submitBtn">Add Prompt</button><button type="button" class="btn btn-secondary" onclick="clearPromptForm()">Clear Form</button></div>
+                    </form>
+                    <div id="statusMessage"></div>
+                </div>
+                <div class="form-section">
+                    <h2>Add New Category</h2>
+                    <form id="categoryForm">
+                        <div class="form-group"><label for="newCategoryName">Category Name</label><input type="text" id="newCategoryName" placeholder="e.g. Health & Wellness" required></div>
+                        <button type="submit" class="btn btn-primary">Add Category</button>
+                    </form>
+                </div>
+            </div>
+            <div class="right-column">
+                <h2>Manage Prompts</h2>
+                <div style="overflow-x:auto;">
+                    <table class="manage-table">
+                        <thead><tr><th>Image</th><th>Title</th><th>Category</th><th>Difficulty</th><th>Actions</th></tr></thead>
+                        <tbody id="promptTableBody"></tbody>
+                    </table>
+                </div>
+                <div id="promptLoader" class="loader">Loading...</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="Users" class="tab-content">
+        <div class="admin-layout">
+            <div class="user-form-column">
+                <div class="form-section">
+                    <h2 id="user-form-title">Add New User</h2>
+                    <form id="userForm">
+                        <input type="hidden" id="userId" name="ID">
+                        <div class="form-group"><label for="username">Username *</label><input type="text" id="username" name="Username" required></div>
+                        <div class="form-group"><label for="password">Password</label><input type="password" id="password" name="Password" placeholder="Enter new or leave blank to keep old"></div>
+                        <div class="form-group"><label for="role">Role *</label><select id="role" name="Role" required><option value="Admin">Admin</option><option value="Master">Master</option></select></div>
+                        <div class="btn-container"><button type="submit" class="btn btn-primary" id="userSubmitBtn">Add User</button><button type="button" class="btn btn-secondary" onclick="clearUserForm()">Clear Form</button></div>
+                    </form>
+                </div>
+            </div>
+            <div class="user-table-column">
+                <h2>Manage Users</h2>
+                <div style="overflow-x:auto;">
+                    <table class="manage-table">
+                        <thead><tr><th>Username</th><th>Role</th><th>Actions</th></tr></thead>
+                        <tbody id="adminTableBody"></tbody>
+                    </table>
+                </div>
+                <div id="userLoader" class="loader">Loading...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxtpZRR7Ej3xB3OL6Bsfl_dgMbV8hT7_iUiXnhWiMEYFLKyWSeoSqJF6mlmwKj7K3hsOA/exec'; // <-- PASTE YOUR URL HERE
+
+    // Global element references
+    const promptForm = document.getElementById('promptForm');
+    const categoryForm = document.getElementById('categoryForm');
+    const userForm = document.getElementById('userForm');
+
+    // --- Tab Management ---
+    function openTab(evt, tabName) {
+        let i, tabcontent, tablinks;
+        tabcontent = document.getElementsByClassName("tab-content");
+        for (i = 0; i < tabcontent.length; i++) { tabcontent[i].style.display = "none"; }
+        tablinks = document.getElementsByClassName("tab-nav")[0].getElementsByTagName("button");
+        for (i = 0; i < tablinks.length; i++) { tablinks[i].className = tablinks[i].className.replace(" active", "");}
+        document.getElementById(tabName).style.display = "block";
+        evt.currentTarget.className += " active";
+    }
+
+    document.addEventListener('DOMContentLoaded', loadAdminData);
+
+    async function loadAdminData() {
+        document.getElementById('promptLoader').style.display = 'block';
+        document.getElementById('userLoader').style.display = 'block';
+
+        try {
+            const response = await fetch(GAS_WEB_APP_URL);
+            const data = await response.json();
+            if (data.success === false) throw new Error(data.message);
+            
+            populateCategoryDropdown(data.categories);
+            populatePromptsTable(data.prompts);
+            populateAdminsTable(data.admins);
+
+        } catch (error) {
+            document.getElementById('promptLoader').innerText = `Failed to load data: ${error.message}`;
+            document.getElementById('userLoader').innerText = `Failed to load data: ${error.message}`;
+        }
+    }
+
+    // --- Prompt & Category Functions ---
+    function populatePromptsTable(prompts) {
+        const tbody = document.getElementById('promptTableBody');
+        const loader = document.getElementById('promptLoader');
+        tbody.innerHTML = '';
+        if (!prompts || prompts.length === 0) {
+            loader.innerText = 'No prompts found. Add one using the form!';
+            return;
+        }
+        prompts.forEach(prompt => {
+            const row = tbody.insertRow();
+            row.dataset.prompt = JSON.stringify(prompt);
+            row.innerHTML = `<td><img src="${prompt.ImageURL}" alt="Preview"></td><td>${prompt.Title}</td><td>${prompt.Category}</td><td>${prompt.Difficulty}</td><td><button class="btn btn-sm btn-edit" onclick="editPrompt(this)">Edit</button><button class="btn btn-sm btn-delete" onclick="deletePrompt('${prompt.ID}')">Delete</button></td>`;
+        });
+        loader.style.display = 'none';
+    }
+    
+    function populateCategoryDropdown(categories) {
+        const select = document.getElementById('category');
+        const currentValue = select.value;
+        select.innerHTML = '<option value="" disabled selected>Select category</option>';
+        if(categories) {
+            categories.sort().forEach(cat => select.add(new Option(cat, cat)));
+        }
+        select.value = currentValue;
+    }
+
+    promptForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const submitBtn = document.getElementById('submitBtn');
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Submitting...';
+
+        const action = document.getElementById('promptId').value ? 'updatePrompt' : 'addPrompt';
+        const formData = new FormData(promptForm);
+        const promptData = Object.fromEntries(formData.entries());
+        promptData.Featured = document.getElementById('featured').checked;
+        
+        try {
+            const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action, data: promptData }) });
+            const result = await res.json();
+            if (!result.success) throw new Error(result.message);
+            
+            // THIS IS THE CORRECTED PART
+            showStatus(`Prompt successfully ${action === 'addPrompt' ? 'added' : 'updated'}!`, 'success');
+
+            clearPromptForm();
+            loadAdminData();
+        } catch (error) { 
+            showStatus(`Error: ${error.message}`, 'error');
+        } finally {
+            submitBtn.disabled = false;
+            // The button text is reset inside clearPromptForm()
+        }
+    });
+
+    categoryForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const catInput = document.getElementById('newCategoryName');
+        try {
+            const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'addCategory', data: { CategoryName: catInput.value.trim() } }) });
+            const result = await res.json();
+            if (!result.success) throw new Error(result.message);
+            alert(`Category "${result.category}" added!`);
+            catInput.value = '';
+            loadAdminData();
+        } catch (error) { alert(`Error: ${error.message}`); }
+    });
+
+    function editPrompt(btn) {
+        const prompt = JSON.parse(btn.closest('tr').dataset.prompt);
+        for (const key in prompt) { if(promptForm.elements[key]) promptForm.elements[key].value = prompt[key]; }
+        promptForm.elements.featured.checked = prompt.Featured === true || prompt.Featured === 'TRUE';
+        document.getElementById('form-title').innerText = 'Edit Prompt';
+        document.getElementById('submitBtn').innerText = 'Update Prompt';
+        window.scrollTo(0,0);
+    }
+
+    async function deletePrompt(id) {
+        if (!confirm('Are you sure?')) return;
+        try {
+            const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'deletePrompt', data: { ID: id } }) });
+            const result = await res.json();
+            if (!result.success) throw new Error(result.message);
+            showStatus('Prompt deleted successfully!', 'success');
+            loadAdminData();
+        } catch (error) { showStatus(`Error: ${error.message}`, 'error'); }
+    }
+    
+    function clearPromptForm() {
+        promptForm.reset();
+        promptForm.promptId.value = '';
+        promptForm.category.selectedIndex = 0;
+        promptForm.difficulty.selectedIndex = 0;
+        document.getElementById('form-title').innerText = 'Add New Prompt';
+        document.getElementById('submitBtn').innerText = 'Add Prompt';
+    }
+
+    function showStatus(message, type) {
+        const statusMessage = document.getElementById('statusMessage');
+        statusMessage.textContent = message;
+        statusMessage.className = `loader status-${type}`; // Use loader for centering and add class
+        statusMessage.style.display = type === 'none' ? 'none' : 'block';
+        setTimeout(() => {
+             if (statusMessage.textContent === message) { // Only hide if it hasn't been replaced by a new message
+                statusMessage.style.display = 'none';
+             }
+        }, 4000); // Hide after 4 seconds
+    }
+
+
+    // --- Admin User Management Functions ---
+    function populateAdminsTable(admins) {
+        const tbody = document.getElementById('adminTableBody');
+        const loader = document.getElementById('userLoader');
+        tbody.innerHTML = '';
+        if (!admins || admins.length === 0) {
+            loader.innerText = 'No admin users found.';
+            return;
+        }
+        admins.forEach(admin => {
+            const row = tbody.insertRow();
+            row.dataset.admin = JSON.stringify(admin);
+            row.innerHTML = `<td>${admin.Username}</td><td>${admin.Role}</td><td><button class="btn btn-sm btn-edit" onclick="editUser(this)">Edit</button><button class="btn btn-sm btn-delete" onclick="deleteUser('${admin.ID}')">Delete</button></td>`;
+        });
+        loader.style.display = 'none';
+    }
+    
+    userForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(userForm);
+        const userData = Object.fromEntries(formData.entries());
+        const action = userData.ID ? 'updateAdmin' : 'addAdmin';
+        if (action === 'addAdmin' && !userData.Password) { alert('Password is required for new users.'); return; }
+
+        try {
+            const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action, data: userData }) });
+            const result = await res.json();
+            if (!result.success) throw new Error(result.message);
+            alert(`User successfully ${action === 'addAdmin' ? 'added' : 'updated'}!`);
+            clearUserForm();
+            loadAdminData();
+        } catch (error) { alert(`Error: ${error.message}`); }
+    });
+    
+    function editUser(btn) {
+        const admin = JSON.parse(btn.closest('tr').dataset.admin);
+        userForm.ID.value = admin.ID;
+        userForm.Username.value = admin.Username;
+        userForm.Role.value = admin.Role;
+        document.getElementById('user-form-title').innerText = 'Edit User';
+        document.getElementById('userSubmitBtn').innerText = 'Update User';
+    }
+
+    function clearUserForm() {
+        userForm.reset();
+        userForm.ID.value = '';
+        document.getElementById('user-form-title').innerText = 'Add New User';
+        document.getElementById('userSubmitBtn').innerText = 'Add User';
+    }
+
+    async function deleteUser(id) {
+        if (!confirm('Are you sure?')) return;
+        try {
+            const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteAdmin', data: { ID: id } }) });
+            const result = await res.json();
+            if (!result.success) throw new Error(result.message);
+            alert('User deleted!');
+            loadAdminData();
+        } catch (error) { alert(`Error deleting user: ${error.message}`); }
+    }
+</script>
+</body>
+</html>
