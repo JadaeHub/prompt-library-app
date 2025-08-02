@@ -41,8 +41,16 @@
         .btn-sm { padding: 5px 10px; font-size: 12px; margin-right: 5px; }
         .btn-edit { background-color: #ffc107; color: black; }
         .btn-delete { background-color: #dc3545; color: white; }
-        .loader, #statusMessage { text-align: center; padding: 40px; font-size: 18px; }
-        #statusMessage { display: none; margin-top: 15px; padding: 10px; border-radius: 5px; }
+        .loader { text-align: center; padding: 40px; font-size: 18px; }
+
+        /* CORRECTED: Shared style for both status messages */
+        #statusMessage, #userStatusMessage {
+            display: none;
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+        }
         .status-success { background-color: #198754; color: white; }
         .status-error { background-color: #dc3545; color: white; }
     </style>
@@ -108,6 +116,8 @@
                         <div class="form-group"><label for="role">Role *</label><select id="role" name="Role" required><option value="Admin">Admin</option><option value="Master">Master</option></select></div>
                         <div class="btn-container"><button type="submit" class="btn btn-primary" id="userSubmitBtn">Add User</button><button type="button" class="btn btn-secondary" onclick="clearUserForm()">Clear Form</button></div>
                     </form>
+                    <!-- ADDED: Dedicated status message div for the user form -->
+                    <div id="userStatusMessage"></div>
                 </div>
             </div>
             <div class="user-table-column">
@@ -125,7 +135,7 @@
 </div>
 
 <script>
-    const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxtpZRR7Ej3xB3OL6Bsfl_dgMbV8hT7_iUiXnhWiMEYFLKyWSeoSqJF6mlmwKj7K3hsOA/exec'; // <-- PASTE YOUR URL HERE
+    const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycby5_8hz57F5g-gYgVJwFwW-2dxz3ma5YpkeDrcQF8jygT5vdN9cbrYJPYl6_Dwjj5Xopg/exec'; // <-- PASTE YOUR URL HERE
 
     // Global element references
     const promptForm = document.getElementById('promptForm');
@@ -207,7 +217,6 @@
             const result = await res.json();
             if (!result.success) throw new Error(result.message);
             
-            // THIS IS THE CORRECTED PART
             showStatus(`Prompt successfully ${action === 'addPrompt' ? 'added' : 'updated'}!`, 'success');
 
             clearPromptForm();
@@ -216,7 +225,6 @@
             showStatus(`Error: ${error.message}`, 'error');
         } finally {
             submitBtn.disabled = false;
-            // The button text is reset inside clearPromptForm()
         }
     });
 
@@ -265,15 +273,12 @@
     function showStatus(message, type) {
         const statusMessage = document.getElementById('statusMessage');
         statusMessage.textContent = message;
-        statusMessage.className = `loader status-${type}`; // Use loader for centering and add class
-        statusMessage.style.display = type === 'none' ? 'none' : 'block';
+        statusMessage.className = `status-${type}`;
+        statusMessage.style.display = 'block';
         setTimeout(() => {
-             if (statusMessage.textContent === message) { // Only hide if it hasn't been replaced by a new message
-                statusMessage.style.display = 'none';
-             }
-        }, 4000); // Hide after 4 seconds
+             if (statusMessage.textContent === message) { statusMessage.style.display = 'none'; }
+        }, 4000);
     }
-
 
     // --- Admin User Management Functions ---
     function populateAdminsTable(admins) {
@@ -294,19 +299,35 @@
     
     userForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        const userSubmitBtn = document.getElementById('userSubmitBtn');
+        userSubmitBtn.disabled = true;
+        userSubmitBtn.innerText = 'Submitting...';
+
         const formData = new FormData(userForm);
         const userData = Object.fromEntries(formData.entries());
         const action = userData.ID ? 'updateAdmin' : 'addAdmin';
-        if (action === 'addAdmin' && !userData.Password) { alert('Password is required for new users.'); return; }
+        if (action === 'addAdmin' && !userData.Password) {
+            alert('Password is required for new users.');
+            userSubmitBtn.disabled = false;
+            userSubmitBtn.innerText = 'Add User';
+            return;
+        }
 
         try {
             const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action, data: userData }) });
             const result = await res.json();
             if (!result.success) throw new Error(result.message);
-            alert(`User successfully ${action === 'addAdmin' ? 'added' : 'updated'}!`);
+            
+            // CORRECTED: Use the new status function
+            showUserStatus(`User successfully ${action === 'addAdmin' ? 'added' : 'updated'}!`, 'success');
+            
             clearUserForm();
             loadAdminData();
-        } catch (error) { alert(`Error: ${error.message}`); }
+        } catch (error) {
+            showUserStatus(`Error: ${error.message}`, 'error');
+        } finally {
+            userSubmitBtn.disabled = false;
+        }
     });
     
     function editUser(btn) {
@@ -331,9 +352,20 @@
             const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteAdmin', data: { ID: id } }) });
             const result = await res.json();
             if (!result.success) throw new Error(result.message);
-            alert('User deleted!');
+            showUserStatus('User deleted successfully!', 'success');
             loadAdminData();
-        } catch (error) { alert(`Error deleting user: ${error.message}`); }
+        } catch (error) { showUserStatus(`Error deleting user: ${error.message}`, 'error'); }
+    }
+
+    // CORRECTED: New dedicated status function for the user tab
+    function showUserStatus(message, type) {
+        const userStatusMessage = document.getElementById('userStatusMessage');
+        userStatusMessage.textContent = message;
+        userStatusMessage.className = `status-${type}`;
+        userStatusMessage.style.display = 'block';
+        setTimeout(() => {
+             if (userStatusMessage.textContent === message) { userStatusMessage.style.display = 'none'; }
+        }, 4000);
     }
 </script>
 </body>
